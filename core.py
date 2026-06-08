@@ -20,7 +20,7 @@ def get_formatted_date(original_date):
 
     return date
 
-def add_post_to_video_list(video_info, query):
+def add_post_to_video_list(video_info, query, collectedBy):
     video = {'video_title':'', 'post_description':'', 'post_published_at':'','video_channel_id': '', 'post_author_username':'', 'post_original_id': '', 'video_views_count': '', 'post_likes_count': '', 'post_shares_count': '', 'collectionDate': '', 'post_url': '', 'post_hashtags': '', 'post_validation_status': ''}
     video['video_title'] = video_info["snippet"]['title']  
     video['post_description'] = video_info["snippet"]['description']
@@ -38,7 +38,7 @@ def add_post_to_video_list(video_info, query):
     video['collectionDate'] = get_formatted_date(str(datetime.now()))
     video['post_url'] = "https://www.youtube.com/watch?v=" + video['post_original_id']
     video['post_hashtags'] = video_specific_infos["tags"]
-    video['post_query'] = "termos: " + query
+    video['post_query'] = "termos: " + query if(collectedBy == "termos") else "perfis: " + video["post_author_username"]
     video['post_shares_count'] = ""
     video['post_validation_status'] = "VALID"
     videos_info.append(video)
@@ -48,7 +48,7 @@ def get_videos_by_terms():
     search_terms = os.getenv("YOUTUBE_SEARCH_TERMS").split(',')
 
     for term in search_terms:
-        params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance", "publishedAfter": "2026-05-25T03:00:00.000Z", "publishedBefore": "2026-06-01T02:59:59.000Z", "q": term, "type": "video", "maxResults": 10, "relevanceLanguage": "pt", "regionCode": 'BR'}
+        params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance", "publishedAfter": "2026-05-25T03:00:00.000Z", "publishedBefore": "2026-06-01T02:59:59.000Z", "q": term, "type": "video", "maxResults": 400, "relevanceLanguage": "pt", "regionCode": 'BR'}
         response = requests.get(url, params)
         data = (response.json()['items'])
      
@@ -56,7 +56,7 @@ def get_videos_by_terms():
             if(detect(video_info["snippet"]['title']) != "pt" or "&" in video_info["snippet"]['title']):
                 continue;
             else:
-                add_post_to_video_list(video_info, term)      
+                add_post_to_video_list(video_info, term, "termos")      
     print(len(videos_info), " vídeos foram coletados")
     create_csv_file(videos_info)
 
@@ -74,14 +74,15 @@ def get_videos_by_profiles():
             if(detect(video_info["snippet"]['title']) != "pt" or "&" in video_info["snippet"]['title']):
                 continue;
             else:
-                add_post_to_video_list(video_info, channel_id)
+                add_post_to_video_list(video_info, channel_id, "profiles")
     print(len(videos_info), " vídeos foram coletados")
     create_csv_file(videos_info)
     
 def main():
     op = int(input("Tecle 1 para coleta por termos e 2 para coleta por perfis: "))
-    if(op == 1):
-        return get_videos_by_terms()
-    return get_videos_by_profiles()
+
+    if(op == 1): return get_videos_by_terms()
+    elif (op == 2): return get_videos_by_profiles()
+    else: print("Insira uma opção válida")
 
 main()
