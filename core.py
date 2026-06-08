@@ -47,37 +47,49 @@ def get_videos_by_terms():
     url = os.getenv("URL_SEARCH")
     search_terms = os.getenv("YOUTUBE_SEARCH_TERMS").split(',')
 
-    for term in search_terms:
-        params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance", "publishedAfter": "2026-05-25T03:00:00.000Z", "publishedBefore": "2026-06-01T02:59:59.000Z", "q": term, "type": "video", "maxResults": 400, "relevanceLanguage": "pt", "regionCode": 'BR'}
-        response = requests.get(url, params)
-        data = (response.json()['items'])
-     
-        for video_info in data:
-            if(detect(video_info["snippet"]['title']) != "pt" or "&" in video_info["snippet"]['title']):
-                continue;
-            else:
-                add_post_to_video_list(video_info, term, "termos")      
-    print(len(videos_info), " vídeos foram coletados")
-    create_csv_file(videos_info)
+    try:
+        for term in search_terms:
+            params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance", "publishedAfter": "2026-05-25T03:00:00.000Z", "publishedBefore": "2026-06-01T02:59:59.000Z", "q": term, "type": "video", "maxResults": 400, "relevanceLanguage": "pt", "regionCode": 'BR'}
+            response = requests.get(url, params)
+            data = (response.json()['items'])
+        
+            for video_info in data:
+                try:
+                    if(detect(video_info["snippet"]['title']) != "pt" or "&" in video_info["snippet"]['title']):
+                        continue;
+                except:
+                    print("Erro ao detectar idioma do vídeo com título ", video_info["snippet"]["title"])
+                else:
+                    add_post_to_video_list(video_info, term, "termos")      
+        print(len(videos_info), " vídeos foram coletados")
+        create_csv_file(videos_info)
+    except KeyError:
+        print("O limite de requisições com a chave de API atual foi atingido. Atualize o valor de YOUTUBE_API_KEY no arquivo .env")
 
 def get_videos_by_profiles():
     url = os.getenv("URL_SEARCH")
     channel_ids = os.getenv("YOUTUBE_CHANNEL_IDS").split(',')
 
-    for channel_id in channel_ids:
-        params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance", "channelId": channel_id, "publishedAfter": "2026-05-25T03:00:00.000Z", "publishedBefore": "2026-06-01T02:59:59.000Z", "type": "video", "maxResults": 400, "relevanceLanguage": "pt", "regionCode": 'BR'}
+    try:
+        for channel_id in channel_ids:
+            params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance", "channelId": channel_id, "publishedAfter": "2026-05-25T03:00:00.000Z", "publishedBefore": "2026-06-01T02:59:59.000Z", "type": "video", "maxResults": 400, "relevanceLanguage": "pt", "regionCode": 'BR'}
 
-        response = requests.get(url, params)
-        data = (response.json()['items'])
-     
-        for video_info in data:
-            if(detect(video_info["snippet"]['title']) != "pt" or "&" in video_info["snippet"]['title']):
-                continue;
-            else:
-                add_post_to_video_list(video_info, channel_id, "profiles")
-    print(len(videos_info), " vídeos foram coletados")
-    create_csv_file(videos_info)
-    
+            response = requests.get(url, params)
+            data = (response.json()['items'])
+        
+            for video_info in data:
+                try:
+                    if(detect(video_info["snippet"]['title']) != "pt" or "&" in video_info["snippet"]['title']):
+                        continue;
+                except:
+                    print("Erro ao detectar idioma do vídeo com título ", video_info["snippet"]["title"])
+                else:
+                    add_post_to_video_list(video_info, channel_id, "profiles")
+        print(len(videos_info), " vídeos foram coletados")
+        create_csv_file(videos_info)
+    except KeyError:
+        print("O limite de requisições com a chave de API atual foi atingido. Atualize o valor de YOUTUBE_API_KEY no arquivo .env")
+
 def main():
     op = int(input("Tecle 1 para coleta por termos e 2 para coleta por perfis: "))
 
