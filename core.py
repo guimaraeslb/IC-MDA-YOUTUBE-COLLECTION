@@ -20,8 +20,22 @@ def get_formatted_date(original_date):
 
     return date
 
-def add_post_to_video_list(video_info, query, collectedBy):
-    video = {'video_title':'', 'post_description':'', 'post_published_at':'','video_channel_id': '', 'post_author_username':'', 'post_original_id': '', 'video_views_count': '', 'post_likes_count': '', 'post_shares_count': '', 'collectionDate': '', 'post_url': '', 'post_hashtags': '', 'post_validation_status': ''}
+def add_post_to_video_list(video_info, query, collected_by):
+    video = {
+        'video_title':'',
+        'post_description':'',
+        'post_published_at':'',
+        'video_channel_id': '',
+        'post_author_username':'',
+        'post_original_id': '',
+        'video_views_count': '',
+        'post_likes_count': '',
+        'post_shares_count': '',
+        'collectionDate': '',
+        'post_url': '',
+        'post_hashtags': '',
+        'post_validation_status': ''
+    }
     video['video_title'] = video_info["snippet"]['title']  
     video['post_description'] = video_info["snippet"]['description']
     video['post_published_at'] = get_formatted_date(video_info["snippet"]['publishedAt'])
@@ -38,7 +52,7 @@ def add_post_to_video_list(video_info, query, collectedBy):
     video['collectionDate'] = get_formatted_date(str(datetime.now()))
     video['post_url'] = "https://www.youtube.com/watch?v=" + video['post_original_id']
     video['post_hashtags'] = video_specific_infos["tags"]
-    video['post_query'] = "termos: " + query if(collectedBy == "termos") else "perfis: " + video["post_author_username"]
+    video['post_query'] = "termos: " + query if(collected_by == "termos") else "perfis: " + video["post_author_username"]
     video['post_shares_count'] = ""
     video['post_validation_status'] = "VALID"
     videos_info.append(video)
@@ -49,7 +63,10 @@ def get_videos_by_terms():
 
     try:
         for term in search_terms:
-            params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance", "publishedAfter": "2026-05-25T03:00:00.000Z", "publishedBefore": "2026-06-01T02:59:59.000Z", "q": term, "type": "video", "maxResults": 400, "relevanceLanguage": "pt", "regionCode": 'BR'}
+            params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance",
+                      "publishedAfter": "2026-06-08T03:00:00.000Z", "publishedBefore": "2026-06-15T02:59:59.000Z",
+                      "q": term, "type": "video", "maxResults": 400, "relevanceLanguage": "pt", "regionCode": 'BR'
+            }
             response = requests.get(url, params)
             data = (response.json()['items'])
         
@@ -72,8 +89,10 @@ def get_videos_by_profiles():
 
     try:
         for channel_id in channel_ids:
-            params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance", "channelId": channel_id, "publishedAfter": "2026-05-25T03:00:00.000Z", "publishedBefore": "2026-06-01T02:59:59.000Z", "type": "video", "maxResults": 400, "relevanceLanguage": "pt", "regionCode": 'BR'}
-
+            params = {"key": os.getenv("YOUTUBE_API_KEY"), "part": "snippet", "order": "relevance",
+                      "channelId": channel_id, "publishedAfter": "2026-06-08T03:00:00.000Z", "publishedBefore": "2026-06-15T02:59:59.000Z",
+                      "type": "video", "maxResults": 400, "relevanceLanguage": "pt", "regionCode": 'BR'
+            }
             response = requests.get(url, params)
             data = (response.json()['items'])
         
@@ -84,7 +103,7 @@ def get_videos_by_profiles():
                 except:
                     print("Erro ao detectar idioma do vídeo com título ", video_info["snippet"]["title"])
                 else:
-                    add_post_to_video_list(video_info, channel_id, "profiles")
+                    add_post_to_video_list(video_info, channel_id, "perfis")
         print(len(videos_info), " vídeos foram coletados")
         create_csv_file(videos_info)
     except KeyError:
